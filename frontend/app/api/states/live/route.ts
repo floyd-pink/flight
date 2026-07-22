@@ -4,7 +4,7 @@ import {
   getLiveStatesByScope,
   type Flight,
 } from "../../../../server/api";
-import { type LiveScope, isLiveScope } from "../../../../lib/live-scope-boxes"; 
+import { type LiveScope, isLiveScope } from "../../../../lib/live-scope-boxes";
 
 // ── Cache ─────────────────────────────────────────────
 interface CacheEntry {

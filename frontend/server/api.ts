@@ -1,3 +1,5 @@
+import type { LiveScope } from "../lib/live-scope-boxes";
+
 const BASE_URL = "https://opensky-network.org/api";
 const OPENSKY_CLIENT_ID = process.env.OPENSKY_CLIENT_ID ?? "floyd-api-client";
 const OPENSKY_CLIENT_SECRET =
@@ -150,7 +152,7 @@ function parseStateVector(s: RawStateVector): Flight {
 export async function getAllStates(options?: {
   time?: number;
   icao24?: string[];
-  bbox?: BoundingBox;
+  bbox?: BoundingBox | null;
   extended?: boolean;
 }): Promise<Flight[]> {
   const params = new URLSearchParams();
