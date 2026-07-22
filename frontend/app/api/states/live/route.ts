@@ -30,7 +30,7 @@ function getCacheEntry(scope: LiveScope): CacheEntry {
 async function fetchScopeData(scope: LiveScope): Promise<Flight[]> {
   return scope === "global"
     ? getAllStates({ extended: true })
-    : getLiveStatesByScope(scope, { extended: true });
+    : getLiveStatesByScope(scope);
 }
 
 export async function GET(request: Request) {
