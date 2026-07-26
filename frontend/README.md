@@ -1,13 +1,13 @@
 # Flight Tracker
 
-A real-time flight tracking dashboard built with Next.js 16. It connects to the OpenSky Network to show live aircraft positions, flight history for any airport, and individual aircraft tracks on an interactive map.
+A real-time flight tracking dashboard built with Next.js 16 and the OpenSky Network API. See live aircraft positions, search flight history for any airport, and track individual aircraft paths on an interactive map.
 
 ---
 
 ## What it does
 
 ### 1. Flight history search
-Enter any airport ICAO code (e.g. `VNKT` for Kathmandu), pick arrivals or departures, choose a time window, and see past flights in a table. Click **"See on Map"** to try and locate that aircraft on the live map.
+Enter an airport ICAO code (e.g. `VNKT` for Kathmandu), pick arrivals or departures, choose a time window up to 48 hours, and see past flights in a table. Click **"See on Map"** to try and locate that aircraft on the live map.
 
 ### 2. Live aircraft states
 Browse all aircraft currently transmitting ADS-B signals in a selected region. Choose from 27 geographic scopes (Nepal, India, Europe, USA, etc.). Results are paginated (50 per page). Click a row for details or **"See on Map"** to fly the map directly to that plane.
@@ -28,7 +28,7 @@ All three pages share a Leaflet map (CARTO Voyager tiles) centered over Nepal by
 | Language | TypeScript |
 | UI | React 19 + Tailwind CSS 4 |
 | Maps | Leaflet + react-leaflet |
-| Data | OpenSky Network API ( ADS-B) |
+| Data | OpenSky Network API (ADS-B) |
 | Auth | OAuth2 client credentials |
 
 ---
@@ -39,11 +39,10 @@ All three pages share a Leaflet map (CARTO Voyager tiles) centered over Nepal by
 Browser → Next.js pages → Next.js API routes → OpenSky Network API
 ```
 
-The app is a **pure frontend** — there is no separate backend or database.
-
-- **Next.js API Route Handlers** act as a server-side proxy so the browser never talks to OpenSky directly (avoids CORS and keeps credentials safe).
-- **OAuth2 client credentials** are used to get a bearer token from OpenSky's auth server. The token is cached in memory and refreshed automatically.
-- **Live states are cached in memory for 15 seconds** to respect OpenSky's rate limits.
+- **Next.js API Route Handlers** act as a server-side proxy so the browser never talks to OpenSky directly.
+- **OAuth2 client credentials** are used to get a bearer token automatically. The token is cached in memory and refreshed on expiry.
+- **Live states are cached for 15 seconds in memory** to respect OpenSky's rate limits.
+- **No separate backend or database** is needed — this is a pure frontend app.
 
 ---
 
@@ -62,14 +61,13 @@ frontend/
 ├── src/
 │   ├── components/
 │   │   ├── FlightMap.tsx                 # Reusable Leaflet map
-│   │   ├── button.tsx                    # "See on Map" button
-│   │   └── showCard.tsx                  # Aircraft detail card
-│   └── showCard.tsx
+│   │   └── button.tsx                    # "See on Map" button
+│   └── showCard.tsx                      # Aircraft detail card
 ├── lib/
 │   └── live-scope-boxes.ts               # 27 geographic regions (bounding boxes)
 ├── server/
 │   ├── api.ts                            # OpenSky API client + OAuth2
-│   └── .env                              # OpenSky credentials (not committed)
+│   └── .env                              # Your OpenSky credentials (not committed)
 └── package.json
 ```
 
@@ -96,16 +94,16 @@ frontend/
    ```
 
 3. **Add your OpenSky credentials**
-
-   Create a `.env` file inside `frontend/server/`. You can copy `.env.example` as a starting point:
+   
+   Create `.env` inside `frontend/server/` with:
    ```
    OPENSKY_CLIENT_ID=your_client_id
    OPENSKY_CLIENT_SECRET=your_client_secret
    ```
+   
+   Get them from your [OpenSky account settings](https://opensky-network.org/).
 
-   Get your credentials from your [OpenSky account settings](https://opensky-network.org/).
-
-   > **Note:** The app has hardcoded fallback credentials in `server/api.ts` for demo purposes. Remove or replace them with your own credentials for production use.
+   > The app has hardcoded fallback credentials in `server/api.ts` for demo purposes. Use your own credentials for production.
 
 4. **Run the development server**
    ```bash
@@ -113,17 +111,27 @@ frontend/
    ```
 
 5. **Open in browser**
-
+   
    Go to [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## Build for production
+## Deploy to Vercel
 
-```bash
-npm run build
-npm run start
-```
+This repo is set up for Vercel deployment. The `vercel.json` at the root tells Vercel that the app lives inside `frontend/`.
+
+1. Push to GitHub:
+   ```bash
+   git push origin main
+   ```
+
+2. Import the repo in [Vercel](https://vercel.com/new).
+
+3. Add your OpenSky credentials as **Environment Variables** in the Vercel dashboard:
+   - `OPENSKY_CLIENT_ID`
+   - `OPENSKY_CLIENT_SECRET`
+
+4. Deploy. Vercel will automatically detect Next.js and build from `frontend/`.
 
 ---
 
@@ -138,8 +146,8 @@ npm run start
 
 ## Notes
 
-- **Next.js 16** is used. This version has breaking changes from older releases — read the [Next.js 16 migration guide](https://nextjs.org/docs/app/building-your-application/upgrading/version-16) if you are familiar with older versions.
-- **Leaflet** requires `window` (browser environment). The map component is dynamically imported with `ssr: false` to prevent server-side rendering errors.
+- **Next.js 16** is used. This version has breaking changes from older releases.
+- **Leaflet** requires `window`. The map component is dynamically imported with `ssr: false`.
 - The app is **Nepal-centric** by default — the map centers on Nepal and Kathmandu (`VNKT`) is the default airport search.
 - **OpenSky rate limits** are strict. The live states endpoint is cached for 15 seconds and deduplicates concurrent requests.
 
