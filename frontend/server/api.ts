@@ -1,9 +1,8 @@
 import type { LiveScope } from "../lib/live-scope-boxes";
 
 const BASE_URL = "https://opensky-network.org/api";
-const OPENSKY_CLIENT_ID = process.env.OPENSKY_CLIENT_ID ?? "floyd-api-client";
-const OPENSKY_CLIENT_SECRET =
-  process.env.OPENSKY_CLIENT_SECRET ?? "wuvi6BU3fV3WkuSBuNj7JPc39dEdkIep";
+const OPENSKY_CLIENT_ID = process.env.OPENSKY_CLIENT_ID;
+const OPENSKY_CLIENT_SECRET = process.env.OPENSKY_CLIENT_SECRET;
 const TOKEN_URL =
   "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token";
 
@@ -103,27 +102,40 @@ let expiresAt: number = 0;
 async function getToken(): Promise<string> {
   if (cachedToken && Date.now() < expiresAt) return cachedToken;
 
-  const res = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: OPENSKY_CLIENT_ID,
-      client_secret: OPENSKY_CLIENT_SECRET,
-    }),
-  });
+  if (!OPENSKY_CLIENT_ID || !OPENSKY_CLIENT_SECRET) {
+    console.warn("OpenSky credentials missing, using anonymous access");
+    return "";
+  }
 
-  if (!res.ok) throw new Error(`Token fetch failed: ${res.status}`);
+  try {
+    const res = await fetch(TOKEN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: OPENSKY_CLIENT_ID,
+        client_secret: OPENSKY_CLIENT_SECRET,
+      }),
+    });
 
-  const data = await res.json();
-  cachedToken = data.access_token;
-  expiresAt = Date.now() + (data.expires_in - 30) * 1000;
-  return cachedToken!;
+    if (!res.ok) {
+      console.warn(`Token fetch failed: ${res.status}, using anonymous access`);
+      return "";
+    }
+
+    const data = await res.json();
+    cachedToken = data.access_token;
+    expiresAt = Date.now() + (data.expires_in - 30) * 1000;
+    return cachedToken!;
+  } catch (error) {
+    console.warn("Failed to fetch OpenSky token, using anonymous access:", error);
+    return "";
+  }
 }
 
 async function authHeaders(): Promise<HeadersInit> {
   const token = await getToken();
-  return { Authorization: `Bearer ${token}` };
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 function parseStateVector(s: RawStateVector): Flight {
