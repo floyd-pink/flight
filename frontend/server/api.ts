@@ -1,10 +1,37 @@
 import type { LiveScope } from "../lib/live-scope-boxes";
+import { Agent } from "undici";
+import { constants as tlsConstants } from "node:crypto";
 
 const BASE_URL = "https://opensky-network.org/api";
 const OPENSKY_CLIENT_ID = process.env.OPENSKY_CLIENT_ID;
 const OPENSKY_CLIENT_SECRET = process.env.OPENSKY_CLIENT_SECRET;
 const TOKEN_URL =
   "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token";
+
+// OpenSky's servers use legacy TLS renegotiation, which Node's fetch (undici)
+// refuses by default since Node 18 (surfaces as an opaque "TypeError: fetch failed").
+// This custom dispatcher explicitly allows it for calls to OpenSky only.
+const openSkyAgent = new Agent({
+  connect: {
+    secureOptions: tlsConstants.SSL_OP_LEGACY_SERVER_CONNECT,
+  },
+});
+
+// Wrapper so every OpenSky fetch call uses the patched dispatcher without
+// having to repeat { dispatcher: openSkyAgent } everywhere.
+function openSkyFetch(url: string, init: RequestInit = {}) {
+  return fetch(url, { ...init, dispatcher: openSkyAgent } as RequestInit);
+}
+
+function getCredentials(): { clientId: string; clientSecret: string } {
+  if (!OPENSKY_CLIENT_ID || !OPENSKY_CLIENT_SECRET) {
+    throw new Error(
+      "Missing OPENSKY_CLIENT_ID / OPENSKY_CLIENT_SECRET environment variables. " +
+        "Set them in your .env.local file (dev) or in your Vercel project's Environment Variables (production)."
+    );
+  }
+  return { clientId: OPENSKY_CLIENT_ID, clientSecret: OPENSKY_CLIENT_SECRET };
+}
 
 export interface Flight {
   icao24: string;
@@ -102,40 +129,29 @@ let expiresAt: number = 0;
 async function getToken(): Promise<string> {
   if (cachedToken && Date.now() < expiresAt) return cachedToken;
 
-  if (!OPENSKY_CLIENT_ID || !OPENSKY_CLIENT_SECRET) {
-    console.warn("OpenSky credentials missing, using anonymous access");
-    return "";
-  }
+  const { clientId, clientSecret } = getCredentials();
 
-  try {
-    const res = await fetch(TOKEN_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "client_credentials",
-        client_id: OPENSKY_CLIENT_ID,
-        client_secret: OPENSKY_CLIENT_SECRET,
-      }),
-    });
+  const res = await openSkyFetch(TOKEN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      client_id: clientId,
+      client_secret: clientSecret,
+    }),
+  });
 
-    if (!res.ok) {
-      console.warn(`Token fetch failed: ${res.status}, using anonymous access`);
-      return "";
-    }
+  if (!res.ok) throw new Error(`Token fetch failed: ${res.status}`);
 
-    const data = await res.json();
-    cachedToken = data.access_token;
-    expiresAt = Date.now() + (data.expires_in - 30) * 1000;
-    return cachedToken!;
-  } catch (error) {
-    console.warn("Failed to fetch OpenSky token, using anonymous access:", error);
-    return "";
-  }
+  const data = await res.json();
+  cachedToken = data.access_token;
+  expiresAt = Date.now() + (data.expires_in - 30) * 1000;
+  return cachedToken!;
 }
 
 async function authHeaders(): Promise<HeadersInit> {
   const token = await getToken();
-  return token ? { Authorization: `Bearer ${token}` } : {};
+  return { Authorization: `Bearer ${token}` };
 }
 
 function parseStateVector(s: RawStateVector): Flight {
@@ -180,7 +196,7 @@ export async function getAllStates(options?: {
   }
   if (options?.extended) params.set("extended", "1");
 
-  const res = await fetch(`${BASE_URL}/states/all?${params}`, {
+  const res = await openSkyFetch(`${BASE_URL}/states/all?${params}`, {
     headers: await authHeaders(),
   });
 
@@ -202,7 +218,7 @@ export async function getOwnStates(options?: {
   if (options?.serials)
     options.serials.forEach((s) => params.append("serials", String(s)));
 
-  const res = await fetch(`${BASE_URL}/states/own?${params}`, {
+  const res = await openSkyFetch(`${BASE_URL}/states/own?${params}`, {
     headers: await authHeaders(),
   });
 
@@ -220,7 +236,7 @@ export async function getFlightsInInterval(
     end: String(end),
   });
 
-  const res = await fetch(`${BASE_URL}/flights/all?${params}`, {
+  const res = await openSkyFetch(`${BASE_URL}/flights/all?${params}`, {
     headers: await authHeaders(),
   });
 
@@ -240,7 +256,7 @@ export async function getFlightsByAircraft(
     end: String(end),
   });
 
-  const res = await fetch(`${BASE_URL}/flights/aircraft?${params}`, {
+  const res = await openSkyFetch(`${BASE_URL}/flights/aircraft?${params}`, {
     headers: await authHeaders(),
   });
 
@@ -261,7 +277,7 @@ export async function getArrivalsByAirport(
     end: String(end),
   });
 
-  const res = await fetch(`${BASE_URL}/flights/arrival?${params}`, {
+  const res = await openSkyFetch(`${BASE_URL}/flights/arrival?${params}`, {
     headers: await authHeaders(),
   });
 
@@ -282,7 +298,7 @@ export async function getDeparturesByAirport(
     end: String(end),
   });
 
-  const res = await fetch(`${BASE_URL}/flights/departure?${params}`, {
+  const res = await openSkyFetch(`${BASE_URL}/flights/departure?${params}`, {
     headers: await authHeaders(),
   });
 
@@ -301,7 +317,7 @@ export async function getTrackByAircraft(
     time: String(time),
   });
 
-  const res = await fetch(`${BASE_URL}/tracks/all?${params}`, {
+  const res = await openSkyFetch(`${BASE_URL}/tracks/all?${params}`, {
     headers: await authHeaders(),
   });
 
