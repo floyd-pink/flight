@@ -1,5 +1,5 @@
 import type { LiveScope } from "../lib/live-scope-boxes";
-import { Agent } from "undici";
+import { Agent, fetch as undiciFetch } from "undici";
 import { constants as tlsConstants } from "node:crypto";
 
 const BASE_URL = "https://opensky-network.org/api";
@@ -17,10 +17,21 @@ const openSkyAgent = new Agent({
   },
 });
 
-// Wrapper so every OpenSky fetch call uses the patched dispatcher without
-// having to repeat { dispatcher: openSkyAgent } everywhere.
-function openSkyFetch(url: string, init: RequestInit = {}) {
-  return fetch(url, { ...init, dispatcher: openSkyAgent } as RequestInit);
+// Use undici's fetch with its own Agent directly. Next.js wraps global fetch
+// in route handlers, which can change how custom dispatchers are handled.
+function openSkyFetch(
+  url: string,
+  init: NonNullable<Parameters<typeof undiciFetch>[1]> = {},
+): Promise<Response> {
+  return undiciFetch(url, { ...init, dispatcher: openSkyAgent })
+    .then((response) => response as unknown as Response)
+    .catch((error: unknown) => {
+      const cause = error instanceof Error ? error.cause : null;
+      const detail = cause instanceof Error
+        ? cause.message
+        : error instanceof Error ? error.message : "unknown network error";
+      throw new Error(`OpenSky connection failed: ${detail}`);
+    });
 }
 
 function getCredentials(): { clientId: string; clientSecret: string } {
