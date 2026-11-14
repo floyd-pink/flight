@@ -16,7 +16,7 @@ Browse all aircraft currently transmitting ADS-B signals in a selected region. C
 Enter an aircraft's ICAO24 hex code (e.g. `3c675a`) and optionally a past date/time. The app fetches the full flight path — time, latitude, longitude, altitude, and heading at every waypoint.
 
 ### Interactive map
-All three pages share a Leaflet map (CARTO Voyager tiles) centered over Nepal by default. When you select an aircraft, the map flies to its position and shows a popup with callsign and ICAO.
+All three pages share a Leaflet map (OpenStreetMap tiles) centered over Nepal by default. When you select an aircraft, the map flies to its position and shows a popup with callsign and ICAO.
 
 ---
 
