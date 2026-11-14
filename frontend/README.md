@@ -41,7 +41,7 @@ Browser → Next.js pages → Next.js API routes → OpenSky Network API
 
 - **Next.js API Route Handlers** act as a server-side proxy so the browser never talks to OpenSky directly.
 - **OAuth2 client credentials** are used to get a bearer token automatically. The token is cached in memory and refreshed on expiry.
-- **Live states are cached for 15 seconds in memory** to respect OpenSky's rate limits.
+- **Live states are cached for 30 seconds in memory** to respect OpenSky's rate limits. Live states can use anonymous access when credentials are absent; flight history and tracks require credentials.
 - **No separate backend or database** is needed — this is a pure frontend app.
 
 ---
@@ -139,8 +139,8 @@ This repo is set up for Vercel deployment. The `vercel.json` at the root tells V
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENSKY_CLIENT_ID` | Yes | Your OpenSky OAuth2 client ID |
-| `OPENSKY_CLIENT_SECRET` | Yes | Your OpenSky OAuth2 client secret |
+| `OPENSKY_CLIENT_ID` | For history and tracks | Your OpenSky OAuth2 client ID; recommended for live states |
+| `OPENSKY_CLIENT_SECRET` | For history and tracks | Your OpenSky OAuth2 client secret; recommended for live states |
 
 ---
 
@@ -149,7 +149,7 @@ This repo is set up for Vercel deployment. The `vercel.json` at the root tells V
 - **Next.js 16** is used. This version has breaking changes from older releases.
 - **Leaflet** requires `window`. The map component is dynamically imported with `ssr: false`.
 - The app is **Nepal-centric** by default — the map centers on Nepal and Kathmandu (`VNKT`) is the default airport search.
-- **OpenSky rate limits** are strict. The live states endpoint is cached for 15 seconds and deduplicates concurrent requests.
+- **OpenSky rate limits** are strict. The live states endpoint is cached for 30 seconds and deduplicates concurrent requests. Anonymous requests have a smaller daily quota.
 
 ---
 

@@ -154,6 +154,14 @@ async function authHeaders(): Promise<HeadersInit> {
   return { Authorization: `Bearer ${token}` };
 }
 
+// OpenSky permits anonymous requests for current state vectors. This keeps the
+// live map usable on a free deployment without API credentials, while still
+// using the larger authenticated quota whenever credentials are configured.
+async function liveStateHeaders(): Promise<HeadersInit | undefined> {
+  if (!OPENSKY_CLIENT_ID && !OPENSKY_CLIENT_SECRET) return undefined;
+  return authHeaders();
+}
+
 function parseStateVector(s: RawStateVector): Flight {
   return {
     icao24: s[0],
@@ -197,7 +205,7 @@ export async function getAllStates(options?: {
   if (options?.extended) params.set("extended", "1");
 
   const res = await openSkyFetch(`${BASE_URL}/states/all?${params}`, {
-    headers: await authHeaders(),
+    headers: await liveStateHeaders(),
   });
 
   if (!res.ok) throw new Error(`getAllStates failed: ${res.status}`);

@@ -18,7 +18,7 @@ interface CacheEntry {
 type CacheStore = Partial<Record<LiveScope, CacheEntry>>;
 
 const memoryCache: CacheStore = {};
-const CACHE_DURATION = 15_000; // 15 seconds
+const CACHE_DURATION = 30_000; // 30 seconds, to conserve OpenSky's anonymous quota
 
 function getCacheEntry(scope: LiveScope): CacheEntry {
   if (!memoryCache[scope]) {
