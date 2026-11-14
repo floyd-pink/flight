@@ -39,7 +39,7 @@ export async function getNepalStatesFromAdsbFi(): Promise<Flight[]> {
 
   const nowValue = "now" in payload ? payload.now : undefined;
   const now = typeof nowValue === "number"
-    ? Math.floor(nowValue)
+    ? Math.floor(nowValue > 1e11 ? nowValue / 1000 : nowValue)
     : Math.floor(Date.now() / 1000);
   const bbox = LIVE_SCOPE_BBOXES.nepal!;
 

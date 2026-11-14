@@ -264,8 +264,8 @@ export default function LiveStatesPage() {
                   <th className="px-4 py-3 font-medium">ICAO24</th>
                   <th className="px-4 py-3 font-medium">Callsign</th>
                   <th className="px-4 py-3 font-medium">Country</th>
-                  <th className="px-4 py-3 font-medium">Altitude</th>
-                  <th className="px-4 py-3 font-medium">Speed</th>
+                  <th className="px-4 py-3 font-medium">Altitude (m)</th>
+                  <th className="px-4 py-3 font-medium">Speed (m/s)</th>
                   <th className="px-4 py-3 font-medium">Position</th>
                   <th className="px-4 py-3 font-medium">Action</th>
                 </tr>
@@ -321,13 +321,13 @@ export default function LiveStatesPage() {
                           onClick={() => showDetails(state)}
                           className="cursor-pointer px-4 py-3"
                         >
-                          {state.baroAltitude ?? "-"}
+                          {state.baroAltitude == null ? "-" : state.baroAltitude.toFixed(0)}
                         </td>
                         <td
                           onClick={() => showDetails(state)}
                           className="cursor-pointer px-4 py-3"
                         >
-                          {state.velocity ?? "-"}
+                          {state.velocity == null ? "-" : state.velocity.toFixed(1)}
                         </td>
                         <td
                           onClick={() => showDetails(state)}
