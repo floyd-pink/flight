@@ -43,7 +43,7 @@ The app is a **pure frontend** — there is no separate backend or database.
 
 - **Next.js API Route Handlers** act as a server-side proxy so the browser never talks to OpenSky directly (avoids CORS and keeps credentials safe).
 - **OAuth2 client credentials** are used to get a bearer token from OpenSky's auth server. The token is cached in memory and refreshed automatically.
-- **All live scopes use adsb.fi** and are cached for 30 seconds. Its public API provides aircraft within 250 NM of a point, so large regions and Global show clearly labeled samples, not complete geographic coverage. Flight history and tracks still use OpenSky and require OpenSky credentials.
+- **All live scopes use adsb.fi** and are cached for 30 seconds. Its public API provides aircraft within 250 NM of a point, so large regions and Global show clearly labeled samples, not complete geographic coverage. Areas without provider receivers can legitimately return zero aircraft. Flight history and tracks still use OpenSky and require OpenSky credentials.
 
 ---
 

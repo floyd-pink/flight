@@ -276,7 +276,9 @@ export default function LiveStatesPage() {
                     >
                       {loading
                         ? "Fetching aircraft streams..."
-                        : "No live states loaded."}
+                        : error
+                          ? "Aircraft could not be loaded."
+                          : "No aircraft are currently reported in this sample area."}
                     </td>
                   </tr>
                 ) : (
