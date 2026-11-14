@@ -69,7 +69,7 @@ frontend/
 │   └── live-scope-boxes.ts               # 27 geographic regions (bounding boxes)
 ├── server/
 │   ├── api.ts                            # OpenSky API client + OAuth2
-│   └── .env                              # OpenSky credentials (not committed)
+└── .env.local                            # OpenSky credentials (not committed)
 └── package.json
 ```
 
@@ -97,7 +97,7 @@ frontend/
 
 3. **Add your OpenSky credentials**
 
-   Create a `.env` file inside `frontend/server/`. You can copy `.env.example` as a starting point:
+   Copy `frontend/.env.example` to `frontend/.env.local` and add your credentials:
    ```
    OPENSKY_CLIENT_ID=your_client_id
    OPENSKY_CLIENT_SECRET=your_client_secret
@@ -105,7 +105,7 @@ frontend/
 
    Get your credentials from your [OpenSky account settings](https://opensky-network.org/).
 
-   > **Note:** The app has hardcoded fallback credentials in `server/api.ts` for demo purposes. Remove or replace them with your own credentials for production use.
+   Next.js reads environment files from `frontend/`, not `frontend/server/`.
 
 4. **Run the development server**
    ```bash

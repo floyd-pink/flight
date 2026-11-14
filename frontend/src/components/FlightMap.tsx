@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 
-import "leaflet/dist/leaflet.css";
-import "leaflet-defaulticon-compatibility/dist/leaflet-defaulticon-compatibility.css";
 import "leaflet-defaulticon-compatibility";
 
 export interface FlightMapTrack {
@@ -25,10 +23,24 @@ function CameraDirector({ lat, lng }: { lat: number; lng: number }) {
   return null;
 }
 
+function PathDirector({ path }: { path: [number, number][] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (path.length > 1) {
+      map.fitBounds(path, { padding: [30, 30] });
+    } else if (path.length === 1) {
+      map.setView(path[0], 9);
+    }
+  }, [map, path]);
+  return null;
+}
+
 export default function FlightMap({
   activeTrack,
+  path,
 }: {
   activeTrack: FlightMapTrack | null;
+  path?: [number, number][];
 }) {
   const defaultCenter: [number, number] = [27.7172, 85.324]; // Default centered over Nepal
 
@@ -50,12 +62,15 @@ export default function FlightMap({
           attribution='&copy; <a href="https://carto.com/attributions">CARTO</a>'
           url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
         />
+        {path && path.length > 0 && (
+          <>
+            <PathDirector path={path} />
+            {path.length > 1 && <Polyline positions={path} color="#2563eb" weight={4} />}
+          </>
+        )}
         {activeTrack && (
           <>
-            <CameraDirector
-              lat={activeTrack.latitude}
-              lng={activeTrack.longitude}
-            />
+            {!path?.length && <CameraDirector lat={activeTrack.latitude} lng={activeTrack.longitude} />}
             <Marker
               position={[activeTrack.latitude, activeTrack.longitude]}
               icon={planeIcon}

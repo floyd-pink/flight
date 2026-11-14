@@ -43,10 +43,10 @@ export async function GET(request: Request) {
     );
   }
 
-  const maxWindow = 7 * 24 * 60 * 60; // 7 days
+  const maxWindow = 48 * 60 * 60;
   if (end - begin > maxWindow) {
     return NextResponse.json(
-      { error: "time window must not exceed 7 days" },
+      { error: "time window must not exceed 48 hours" },
       { status: 400 },
     );
   }
@@ -61,10 +61,6 @@ export async function GET(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
 
-    if (message.includes("failed: 4")) {
-      return NextResponse.json({ error: message }, { status: 400 });
-    }
-
-    return NextResponse.json({ error: message }, { status: 502 });
+    return NextResponse.json({ error: message }, { status: message.includes("failed: 429") ? 429 : 502 });
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import type { FlightMapTrack } from "../src/components/FlightMap";
 
@@ -143,16 +143,18 @@ export default function Home() {
 
   // Intercept historical log clicks and try to find an active coordinate projection
   const handleLocateHistoricalPlane = async (flight: FlightRecord) => {
+    setError("");
     try {
-      // Fetch the plane's live positions from your operational live states tracking API
-      const res = await fetch(`/api/states/live?scope=global`);
+      const res = await fetch(`/api/states/by-aircraft?icao24=${encodeURIComponent(flight.icao24)}`);
       const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Could not look up the aircraft.");
+      }
 
       const livePayload = data as { states?: unknown } | null;
       const livePlanes = Array.isArray(livePayload?.states)
         ? (livePayload.states as LivePlaneLookup[])
         : [];
-      // Match the row's ICAO24 string address within the live airspace pool
       const activeMatch = livePlanes.find(
         (p) => p.icao24 === flight.icao24,
       );
@@ -169,19 +171,10 @@ export default function Home() {
           longitude: activeMatch.longitude,
         });
       } else {
-        // Fallback placeholder mock coordinate if it has departed out of active scope range
-        alert(
-          `Aircraft ${flight.icao24} is not currently transmitting live state vectors in this scope. Showing a simulated projection.`,
-        );
-        setMapFocusPlane({
-          icao24: flight.icao24,
-          callsign: flight.callsign || "SIM-TRACK",
-          latitude: 27.7172,
-          longitude: 85.324,
-        });
+        setError(`Aircraft ${flight.icao24} has no current position available.`);
       }
-    } catch {
-      setError("Failed to bridge historical logs to live radar metrics.");
+    } catch (lookupError) {
+      setError(lookupError instanceof Error ? lookupError.message : "Aircraft lookup failed.");
     }
   };
 
@@ -347,7 +340,7 @@ export default function Home() {
       </div>
 
       {/* RIGHT CONTENT BLOCK: Interactive Leaflet Viewport Canvas */}
-      <div className="relative min-h-[560px] overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 shadow-[0_30px_80px_-35px_rgba(15,23,42,0.35)] backdrop-blur">
+      <div className="relative h-[560px] overflow-hidden rounded-[2rem] border border-white/70 bg-white/70 shadow-[0_30px_80px_-35px_rgba(15,23,42,0.35)] backdrop-blur xl:h-[calc(100vh-105px)] xl:min-h-[560px]">
         <DynamicFlightMap activeTrack={mapFocusPlane} />
       </div>
       </div>

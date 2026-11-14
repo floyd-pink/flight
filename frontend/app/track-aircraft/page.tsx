@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
+import type { FlightMapTrack } from "../../src/components/FlightMap";
+
+const DynamicFlightMap = dynamic(() => import("../../src/components/FlightMap"), { ssr: false });
 
 interface TrackWaypoint {
   time: number;
@@ -25,6 +29,24 @@ export default function TrackAircraftPage() {
   const [track, setTrack] = useState<TrackData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const mapPath = useMemo<[number, number][]>(
+    () => track?.path.flatMap((point) =>
+      point.latitude != null && point.longitude != null &&
+      Number.isFinite(point.latitude) && Number.isFinite(point.longitude)
+        ? [[point.latitude, point.longitude] as [number, number]]
+        : [],
+    ) ?? [],
+    [track],
+  );
+  const lastPosition = mapPath.at(-1);
+  const mapPlane: FlightMapTrack | null = track && lastPosition
+    ? {
+        icao24: track.icao24,
+        callsign: track.callsign ?? "TRACK",
+        latitude: lastPosition[0],
+        longitude: lastPosition[1],
+      }
+    : null;
 
   async function handleSearch() {
     setLoading(true);
@@ -118,6 +140,15 @@ export default function TrackAircraftPage() {
             </p>
           ) : null}
         </section>
+
+        {track && mapPath.length > 0 && (
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="mb-4 text-2xl font-semibold text-slate-900">Aircraft path</h2>
+            <div className="h-[480px] overflow-hidden rounded-2xl border border-slate-200">
+              <DynamicFlightMap activeTrack={mapPlane} path={mapPath} />
+            </div>
+          </section>
+        )}
 
         <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between gap-3">
