@@ -41,7 +41,7 @@ Browser → Next.js pages → Next.js API routes → OpenSky Network API
 
 - **Next.js API Route Handlers** act as a server-side proxy so the browser never talks to OpenSky directly.
 - **OAuth2 client credentials** are used to get a bearer token automatically. The token is cached in memory and refreshed on expiry.
-- **Live states are cached for 30 seconds in memory** to respect OpenSky's rate limits. Live states can use anonymous access when credentials are absent; flight history and tracks require credentials.
+- **Live states are cached for 30 seconds in memory** to respect OpenSky's rate limits. Live states use anonymous access when credentials are absent or authentication is unavailable; flight history and tracks require credentials.
 - **No separate backend or database** is needed — this is a pure frontend app.
 
 ---

@@ -43,7 +43,7 @@ The app is a **pure frontend** — there is no separate backend or database.
 
 - **Next.js API Route Handlers** act as a server-side proxy so the browser never talks to OpenSky directly (avoids CORS and keeps credentials safe).
 - **OAuth2 client credentials** are used to get a bearer token from OpenSky's auth server. The token is cached in memory and refreshed automatically.
-- **Live states are cached in memory for 30 seconds** to respect OpenSky's rate limits. Live states can use anonymous access when credentials are absent; flight history and tracks require credentials.
+- **Live states are cached in memory for 30 seconds** to respect OpenSky's rate limits. Live states use anonymous access when credentials are absent or authentication is unavailable; flight history and tracks require credentials.
 
 ---
 

@@ -170,7 +170,12 @@ async function authHeaders(): Promise<HeadersInit> {
 // using the larger authenticated quota whenever credentials are configured.
 async function liveStateHeaders(): Promise<HeadersInit | undefined> {
   if (!OPENSKY_CLIENT_ID && !OPENSKY_CLIENT_SECRET) return undefined;
-  return authHeaders();
+  try {
+    return await authHeaders();
+  } catch (error) {
+    console.warn("OpenSky authentication unavailable; trying anonymous live states", error);
+    return undefined;
+  }
 }
 
 function parseStateVector(s: RawStateVector): Flight {
