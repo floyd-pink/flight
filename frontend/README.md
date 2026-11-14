@@ -1,6 +1,6 @@
 # Flight Tracker
 
-A real-time flight tracking dashboard built with Next.js 16 and the OpenSky Network API. See live aircraft positions, search flight history for any airport, and track individual aircraft paths on an interactive map.
+A real-time flight tracking dashboard built with Next.js 16. It uses adsb.fi for live aircraft positions and OpenSky Network for flight history and tracks.
 
 ---
 
@@ -10,7 +10,7 @@ A real-time flight tracking dashboard built with Next.js 16 and the OpenSky Netw
 Enter an airport ICAO code (e.g. `VNKT` for Kathmandu), pick arrivals or departures, choose a time window up to 48 hours, and see past flights in a table. Click **"See on Map"** to try and locate that aircraft on the live map.
 
 ### 2. Live aircraft states
-Browse all aircraft currently transmitting ADS-B signals in a selected region. Choose from 27 geographic scopes (Nepal, India, Europe, USA, etc.). Results are paginated (50 per page). Click a row for details or **"See on Map"** to fly the map directly to that plane.
+Browse live aircraft samples for 27 geographic scopes (Nepal, India, Europe, USA, etc.). The free feed covers circles of up to 250 NM around the listed locations, so large regions are partial samples. Results are paginated (50 per page). Click a row for details or **"See on Map"** to fly the map directly to that plane.
 
 ### 3. Track an aircraft
 Enter an aircraft's ICAO24 hex code (e.g. `3c675a`) and optionally a past date/time. The app fetches the full flight path — time, latitude, longitude, altitude, and heading at every waypoint.
@@ -28,7 +28,7 @@ All three pages share a Leaflet map (OpenStreetMap tiles) centered over Nepal by
 | Language | TypeScript |
 | UI | React 19 + Tailwind CSS 4 |
 | Maps | Leaflet + react-leaflet |
-| Data | OpenSky Network API; adsb.fi for Nepal live states |
+| Data | adsb.fi for live states; OpenSky Network API for history and tracks |
 | Auth | OAuth2 client credentials |
 
 ---
@@ -41,7 +41,7 @@ Browser → Next.js pages → Next.js API routes → OpenSky Network API
 
 - **Next.js API Route Handlers** act as a server-side proxy so the browser never talks to OpenSky directly.
 - **OAuth2 client credentials** are used to get a bearer token automatically. The token is cached in memory and refreshed on expiry.
-- **Nepal live states use adsb.fi** within 250 NM of central Nepal and are cached for 30 seconds. Other scopes, flight history, and tracks use OpenSky. Flight history and tracks require OpenSky credentials.
+- **All live scopes use adsb.fi** and are cached for 30 seconds. Its public API provides aircraft within 250 NM of a point, so large regions and Global show clearly labeled samples, not complete geographic coverage. Flight history and tracks still use OpenSky and require OpenSky credentials.
 - **No separate backend or database** is needed — this is a pure frontend app.
 
 ---
@@ -139,8 +139,8 @@ This repo is set up for Vercel deployment. The `vercel.json` at the root tells V
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `OPENSKY_CLIENT_ID` | For history and tracks | Your OpenSky OAuth2 client ID; recommended for live states |
-| `OPENSKY_CLIENT_SECRET` | For history and tracks | Your OpenSky OAuth2 client secret; recommended for live states |
+| `OPENSKY_CLIENT_ID` | For history and tracks | Your OpenSky OAuth2 client ID |
+| `OPENSKY_CLIENT_SECRET` | For history and tracks | Your OpenSky OAuth2 client secret |
 
 ---
 
@@ -149,7 +149,7 @@ This repo is set up for Vercel deployment. The `vercel.json` at the root tells V
 - **Next.js 16** is used. This version has breaking changes from older releases.
 - **Leaflet** requires `window`. The map component is dynamically imported with `ssr: false`.
 - The app is **Nepal-centric** by default — the map centers on Nepal and Kathmandu (`VNKT`) is the default airport search.
-- **OpenSky rate limits** are strict. The live states endpoint is cached for 30 seconds and deduplicates concurrent requests. Anonymous requests have a smaller daily quota.
+- **adsb.fi rate limits** allow one public request per second. Live states are cached for 30 seconds and concurrent requests for the same scope are deduplicated. Global samples need four provider requests.
 
 ---
 

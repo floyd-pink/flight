@@ -1,25 +1,21 @@
 import { NextResponse } from "next/server";
-import {
-  getAllStates,
-  getLiveStatesByScope,
-  type Flight,
-} from "../../../../server/api";
+import { type Flight } from "../../../../server/api";
 import { type LiveScope, isLiveScope } from "../../../../lib/live-scope-boxes";
-import { getNepalStatesFromAdsbFi } from "../../../../server/adsbfi";
+import { getAdsbFiCoverage, getLiveStatesFromAdsbFi } from "../../../../server/adsbfi";
 
 // ── Cache ─────────────────────────────────────────────
 interface CacheEntry {
   data: Flight[];
   lastFetch: number;
   // tracks an in-flight fetch so concurrent requests for the same scope
-  // don't all hit OpenSky at once (important given the tight rate limit)
+  // don't all hit adsb.fi at once (important given the tight rate limit)
   inFlight: Promise<Flight[]> | null;
 }
 
 type CacheStore = Partial<Record<LiveScope, CacheEntry>>;
 
 const memoryCache: CacheStore = {};
-const CACHE_DURATION = 30_000; // 30 seconds, to conserve OpenSky's anonymous quota
+const CACHE_DURATION = 30_000; // 30 seconds, to conserve adsb.fi's public quota
 
 function getCacheEntry(scope: LiveScope): CacheEntry {
   if (!memoryCache[scope]) {
@@ -29,10 +25,7 @@ function getCacheEntry(scope: LiveScope): CacheEntry {
 }
 
 async function fetchScopeData(scope: LiveScope): Promise<Flight[]> {
-  if (scope === "nepal") return getNepalStatesFromAdsbFi();
-  return scope === "global"
-    ? getAllStates({ extended: true })
-    : getLiveStatesByScope(scope);
+  return getLiveStatesFromAdsbFi(scope);
 }
 
 export async function GET(request: Request) {
@@ -104,16 +97,16 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       scope,
-      source: scope === "nepal" ? "adsb.fi" : "OpenSky",
-      coverage: scope === "nepal" ? "Within 250 NM of central Nepal" : null,
+      source: "adsb.fi",
+      coverage: getAdsbFiCoverage(scope),
       page,
       limit,
       totalResults: activeData.length,
       totalPages: Math.ceil(activeData.length / limit),
       states: paginatedStates,
-    }, scope === "nepal" ? {
+    }, {
       headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=30" },
-    } : undefined);
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`Error serving scope "${scope}":`, error);

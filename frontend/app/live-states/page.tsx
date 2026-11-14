@@ -61,6 +61,7 @@ export default function LiveStatesPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [coverage, setCoverage] = useState<string | null>(null);
   const [selectedPlane, setSelectedPlane] = useState<LiveState | null>(null);
   const [mapFocusPlane, setMapFocusPlane] = useState<FlightMapTrack | null>(
     null,
@@ -127,6 +128,7 @@ export default function LiveStatesPage() {
     setPage(1);
     setHasMore(true);
     setError("");
+    setCoverage(null);
   };
 
   // Fetch data matching current scope or page increment
@@ -151,6 +153,7 @@ export default function LiveStatesPage() {
         }
 
         const rawNewStates = Array.isArray(data.states) ? data.states : [];
+        if (typeof data.coverage === "string") setCoverage(data.coverage);
 
         // Append data if we're on page > 1, otherwise set fresh
         setStates((prev) =>
@@ -199,14 +202,8 @@ export default function LiveStatesPage() {
             Live aircraft state vectors
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            {scope === "nepal" ? (
-              <>
-                Live aircraft data: <a className="underline" href="https://adsb.fi" target="_blank" rel="noreferrer">adsb.fi</a>.
-                Coverage is within 250 NM of central Nepal; aircraft outside that circle may not appear.
-              </>
-            ) : (
-              "This shows aircraft currently reported by OpenSky."
-            )}
+            Live aircraft data: <a className="underline" href="https://adsb.fi" target="_blank" rel="noreferrer">adsb.fi</a>.
+            {coverage && ` ${coverage}`}
           </p>
 
           <div className="mt-6 flex flex-col gap-3">
