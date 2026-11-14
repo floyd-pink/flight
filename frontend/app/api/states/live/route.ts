@@ -5,6 +5,7 @@ import {
   type Flight,
 } from "../../../../server/api";
 import { type LiveScope, isLiveScope } from "../../../../lib/live-scope-boxes";
+import { getNepalStatesFromAdsbFi } from "../../../../server/adsbfi";
 
 // ── Cache ─────────────────────────────────────────────
 interface CacheEntry {
@@ -28,6 +29,7 @@ function getCacheEntry(scope: LiveScope): CacheEntry {
 }
 
 async function fetchScopeData(scope: LiveScope): Promise<Flight[]> {
+  if (scope === "nepal") return getNepalStatesFromAdsbFi();
   return scope === "global"
     ? getAllStates({ extended: true })
     : getLiveStatesByScope(scope);
@@ -102,12 +104,16 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       scope,
+      source: scope === "nepal" ? "adsb.fi" : "OpenSky",
+      coverage: scope === "nepal" ? "Within 250 NM of central Nepal" : null,
       page,
       limit,
       totalResults: activeData.length,
       totalPages: Math.ceil(activeData.length / limit),
       states: paginatedStates,
-    });
+    }, scope === "nepal" ? {
+      headers: { "Cache-Control": "public, s-maxage=30, stale-while-revalidate=30" },
+    } : undefined);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     console.error(`Error serving scope "${scope}":`, error);

@@ -28,7 +28,7 @@ All three pages share a Leaflet map (OpenStreetMap tiles) centered over Nepal by
 | Language | TypeScript |
 | UI | React 19 + Tailwind CSS 4 |
 | Maps | Leaflet + react-leaflet |
-| Data | OpenSky Network API ( ADS-B) |
+| Data | OpenSky Network API; adsb.fi for Nepal live states |
 | Auth | OAuth2 client credentials |
 
 ---
@@ -43,7 +43,7 @@ The app is a **pure frontend** — there is no separate backend or database.
 
 - **Next.js API Route Handlers** act as a server-side proxy so the browser never talks to OpenSky directly (avoids CORS and keeps credentials safe).
 - **OAuth2 client credentials** are used to get a bearer token from OpenSky's auth server. The token is cached in memory and refreshed automatically.
-- **Live states are cached in memory for 30 seconds** to respect OpenSky's rate limits. Live states use anonymous access when credentials are absent or authentication is unavailable; flight history and tracks require credentials.
+- **Nepal live states use adsb.fi** within 250 NM of central Nepal and are cached for 30 seconds. Other scopes, flight history, and tracks use OpenSky. Flight history and tracks require OpenSky credentials.
 
 ---
 

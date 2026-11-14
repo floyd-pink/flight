@@ -199,7 +199,14 @@ export default function LiveStatesPage() {
             Live aircraft state vectors
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-            This shows aircraft currently reported by OpenSky.
+            {scope === "nepal" ? (
+              <>
+                Live aircraft data: <a className="underline" href="https://adsb.fi" target="_blank" rel="noreferrer">adsb.fi</a>.
+                Coverage is within 250 NM of central Nepal; aircraft outside that circle may not appear.
+              </>
+            ) : (
+              "This shows aircraft currently reported by OpenSky."
+            )}
           </p>
 
           <div className="mt-6 flex flex-col gap-3">
